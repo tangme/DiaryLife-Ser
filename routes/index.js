@@ -32,6 +32,7 @@ router.post('/', function(req, res, next) {
 
 /*用户注册*/
 router.post('/register',function(req, res, next){
+	console.log('======== in index.');
 	console.log('req.headers:',req.headers.tanglv);
 	if(!!req.headers.tanglv && req.headers.tanglv == 'zhoudan'){
 		res.json({msg:'ok.'});

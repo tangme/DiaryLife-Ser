@@ -6,17 +6,26 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+const serverRouter = require('./routes/server');
+
+const whiteOriginList = ['http://localhost:8043'];
 
 var app = express();
 
 //设置跨域访问
 app.all('*', function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
+    console.log(req.headers.origin);
+    if(whiteOriginList.some(function(item){
+        return item == req.headers.origin;
+    })){
+        res.header("Access-Control-Allow-Origin", req.headers.origin);
+    }
     res.header("Access-Control-Allow-Credentials", "true");
     
-    res.header("Access-Control-Allow-Headers", "content-type,TANGLV");
+    res.header("Access-Control-Allow-Headers", "content-type,timestamp,tanglv");
     res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
     /*res.header("Content-Type", "application/json;charset=utf-8");*/
+
     next();
 });
 
@@ -30,6 +39,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use('/server',serverRouter);
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
