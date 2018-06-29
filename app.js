@@ -4,9 +4,11 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+global.reqlib = require('app-root-path').require;
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-const serverRouter = require('./routes/server');
+const loginControl = reqlib('/servers/loginServer/loginControl');
 
 const whiteOriginList = ['http://localhost:8043'];
 
@@ -39,7 +41,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/server',serverRouter);
+app.use('/server',loginControl);
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
