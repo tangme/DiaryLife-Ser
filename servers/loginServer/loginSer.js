@@ -1,4 +1,5 @@
 const mysql = reqlib('/database/mysqlDriver');
+const uuidv1 = require('uuid/v1');
 
 /*查询登录信息*/
 const queryUserSql = `SELECT account,email,phone from user t where (t.account=? or t.email=? or t.phone=?) and t.pwd=?`;
@@ -12,7 +13,7 @@ const checkAccountExistedSql = `SELECT
 				t.email = ? 
 				OR t.phone = ? `;
 /*注册sql*/				
-const insertAccountSql = `insert into user(email,phone,pwd) values(?,?,?)`;				
+const insertAccountSql = `insert into user(email,phone,pwd,tid) values(?,?,?,?)`;				
 
 module.exports = {
 	/*验证 帐号与密码 有效性*/
@@ -52,7 +53,7 @@ module.exports = {
 	},
 	/*进行注册操作*/
 	doRegister:function(email,phone,pwd){
-		let sqlParams = [email,phone,pwd]
+		let sqlParams = [email,phone,pwd,uuidv1()];
 		return mysql.exe(insertAccountSql,sqlParams).then(data=>{
 			return {'code':1,'msg':'注册成功'};
 		},data=>{
