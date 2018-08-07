@@ -3,7 +3,7 @@ const router = express.Router();
 
 const mysql = reqlib('/database/mysqlDriver');
 const loginSer = reqlib('/servers/loginServer/loginSer');
-
+const SESSION_STORE = reqlib('/SESSION_STORE');
 
 
 /*用户注册*/
@@ -29,6 +29,10 @@ router.post('/register', function(req, res, next) {
 router.post('/login', function(req, res, next) {
 	let tmpBody = req.body;
     loginSer.validAccountAndPwd(tmpBody.account,tmpBody.pwd).then(data=>{
+        console.log("------------------------");
+        console.log(data);
+        console.log("------------------------");
+        SESSION_STORE[req.sessionID] = data.userObj;
         res.json(data);
     });
 });

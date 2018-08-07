@@ -2,7 +2,7 @@ const mysql = reqlib('/database/mysqlDriver');
 const uuidv1 = require('uuid/v1');
 
 /*查询登录信息*/
-const queryUserSql = `SELECT account,email,phone from user t where (t.account=? or t.email=? or t.phone=?) and t.pwd=?`;
+const queryUserSql = `SELECT account,email,phone,tid from user t where (t.account=? or t.email=? or t.phone=?) and t.pwd=?`;
 /*查询电子邮箱、手机号是否已经存在*/
 const checkAccountExistedSql = `SELECT
 				( CASE WHEN t.email = ? THEN 1 ELSE 0 END ) email,
