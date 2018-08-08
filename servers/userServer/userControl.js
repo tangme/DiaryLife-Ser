@@ -12,14 +12,11 @@ const SESSION_STORE = reqlib('/SESSION_STORE');
 router.post('/updateUserInfo', function(req, res, next) {
 	let tmpBody = req.body;
 	let userInfo = SESSION_STORE[req.sessionID];
-	console.log(tmpBody);
 	if(typeof userInfo != 'undefined'){
-		console.log(userInfo.tid);
 		userSer.updateUserInfo(userInfo.tid,tmpBody.nickName).then(data=>{
-			console.log(data);
+    		res.json(data);
 		})
 	}
-    res.json({'msg':'ok'});
 });
 
 module.exports = router;

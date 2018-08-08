@@ -2,7 +2,7 @@ const mysql = reqlib('/database/mysqlDriver');
 const uuidv1 = require('uuid/v1');
 
 /*查询登录信息*/
-const queryUserSql = `SELECT account,email,phone,tid from user t where (t.account=? or t.email=? or t.phone=?) and t.pwd=?`;
+const queryUserSql = `SELECT account,email,phone,tid,nickname from user t where (t.account=? or t.email=? or t.phone=?) and t.pwd=?`;
 /*查询电子邮箱、手机号是否已经存在*/
 const checkAccountExistedSql = `SELECT
 				( CASE WHEN t.email = ? THEN 1 ELSE 0 END ) email,
@@ -25,10 +25,16 @@ module.exports = {
 		}
 		let sqlParams = [account,account,account,pwd];
 		return mysql.exe(queryUserSql,sqlParams).then(function(data){
+			let sendData = null,sessionStoreData = null;
 	        if(!!data && data.length==1){
-	            return {'code':1,'msg':'登录成功','userObj':data[0]};
+	        	let sendTmpData = JSON.parse(JSON.stringify(data[0]));//深拷贝数据
+	        	delete sendTmpData.tid;//返回给客户端的数据，剔除tid属性
+	        	sendData = {'code':1,'msg':'登录成功','userObj':sendTmpData};
+	        	sessionStoreData = data[0];
+	            return {sendData,sessionStoreData};
 	        }else{
-	            return {'code':0,'msg':'帐号或密码错误'};
+	            sendData = {'code':0,'msg':'帐号或密码错误'};
+	            return {sendData,sessionStoreData};
 	        }
 	    });
 	},

@@ -12,13 +12,11 @@ module.exports = {
 		}
 		let sqlParams = [nickName,tid];
 		return mysql.exe(UPDATE_USERINFO,sqlParams).then(function(data){
-			console.log("||||||||||||||||||||||");
-			console.log(data);
-	        if(!!data && data.length==1){
-	            return {'code':1,'msg':'操作成功'};
-	        }else{
-	            return {'code':0,'msg':'操作失败'};
-	        }
+			if(data.fieldCount == 0){
+				return {'code':1,'msg':'操作成功'};
+			}else{
+				return {'code':0,'msg':'操作失败'};
+			}
 	    });
 	}
 };

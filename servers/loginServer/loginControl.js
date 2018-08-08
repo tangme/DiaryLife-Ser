@@ -6,7 +6,10 @@ const loginSer = reqlib('/servers/loginServer/loginSer');
 const SESSION_STORE = reqlib('/SESSION_STORE');
 
 
-/*用户注册*/
+/**
+ * [用户注册]
+ * @author tanglv 2018-08-08
+ */
 router.post('/register', function(req, res, next) {
     let tmpData = req.body.data;
     if(!tmpData.email || !tmpData.phone || !tmpData.pwd){
@@ -23,29 +26,28 @@ router.post('/register', function(req, res, next) {
             });
         }
     });
-});
+}); 
 
-/*用户登录*/
+/**
+ * [用户登录]
+ * @author tanglv 2018-08-08
+ */
 router.post('/login', function(req, res, next) {
 	let tmpBody = req.body;
     loginSer.validAccountAndPwd(tmpBody.account,tmpBody.pwd).then(data=>{
-        console.log("------------------------");
-        console.log(data);
-        console.log("------------------------");
-        SESSION_STORE[req.sessionID] = data.userObj;
-        res.json(data);
+        let {sendData,sessionStoreData} = data;
+        !!sessionStoreData && (SESSION_STORE[req.sessionID] = sessionStoreData);
+        res.json(sendData);
     });
 });
 
-/*用户退出*/
+/**
+ * [用户退出]
+ * @author tanglv 2018-08-08
+ */
 router.post('/logout', function(req, res, next) {
-    res.json({ 'msg': 'in logout methods' });
-    return;
-    if (!!req.headers.tanglv && req.headers.tanglv == 'zhoudan') {
-        res.json({ msg: 'ok.' });
-    } else {
-        res.status(403).json({ error: 'message' });
-    }
+    delete SESSION_STORE[req.sessionID];
+    res.end();
 });
 
 module.exports = router;

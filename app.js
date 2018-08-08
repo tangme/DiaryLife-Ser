@@ -28,8 +28,12 @@ app.use(session({
 
 }));
 
-//设置跨域访问
+/**
+ * [设置跨域访问]
+ * @author tanglv 2018-08-08
+ */
 app.all('*', function(req, res, next) {
+    console.log('in 设置跨域访问');
     if (whiteOriginList.some(function(item) {
             return item == req.headers.origin;
         })) {
@@ -40,13 +44,25 @@ app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "content-type,timestamp,tanglv");
     res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
     /*res.header("Content-Type", "application/json;charset=utf-8");*/
-    if(typeof SESSION_STORE[req.sessionID] != 'undefined'){
-        console.log('有SESSION'); 
+    if(req.method == 'OPTIONS'){
+        res.send(200);
     }else{
-        console.log('没有SESSION');
+        next(); 
     }
-    next();
 });
+
+/**
+ * [拦截器]
+ * @author tanglv 2018-08-08
+ */
+app.all('*',function(req,res,next){
+    if(typeof SESSION_STORE[req.sessionID] != 'undefined' || req.path == '/server/login' || req.path == '/server/logout'){
+        next();
+    }else{
+        res.status(403).json({"msg":"会话已过期，请重新登录"});
+    }
+});
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
