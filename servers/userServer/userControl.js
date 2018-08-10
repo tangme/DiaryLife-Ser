@@ -12,9 +12,16 @@ const SESSION_STORE = reqlib('/SESSION_STORE');
 router.post('/updateUserInfo', function(req, res, next) {
 	let tmpBody = req.body;
 	let userInfo = SESSION_STORE[req.sessionID];
+	let aWss = expressWs.getWss('/notification');
+	
 	if(typeof userInfo != 'undefined'){
 		userSer.updateUserInfo(userInfo.tid,tmpBody.nickName).then(data=>{
     		res.json(data);
+    		/*aWss.clients.forEach(function (client) {
+    			console.log(client);
+			    client.send('hello-lalal');
+			});*/
+			WS_MAP.get('tanglv').send('from map lalala.');
 		})
 	}
 });

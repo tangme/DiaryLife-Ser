@@ -1,9 +1,11 @@
 var createError = require('http-errors');
 var express = require('express');
+var expressWs = require('express-ws');
 const session = require('express-session');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var http = require('http');
 
 global.reqlib = require('app-root-path').require;
 
@@ -15,6 +17,26 @@ const whiteOriginList = ['http://localhost:8043'];
 const SESSION_STORE = reqlib('/SESSION_STORE');
 
 var app = express();
+var server = http.createServer(app);
+global.expressWs = expressWs(app,server);
+global.WS_MAP = new Map()
+
+/**
+ * [websocket]
+ * @author tanglv 2018-08-09
+ */
+app.ws('/notification', function(ws, req) {
+    console.log('|||||||||||');
+    console.log(req.query.socketid);
+  ws.on('message', function(msg) {
+    console.log(msg);
+  });
+  ws.send(`it's finally make the websocket work.${req.socketid}`);
+  WS_MAP.set(req.socketid,ws);
+  console.log('socket - /notification', 'success');
+});
+
+
 
 app.use(session({
     ////这里的name值得是cookie的name，默认cookie的name是：connect.sid
@@ -34,6 +56,7 @@ app.use(session({
  */
 app.all('*', function(req, res, next) {
     console.log('in 设置跨域访问');
+    console.log(`===${req.path}===${req.method}`);
     if (whiteOriginList.some(function(item) {
             return item == req.headers.origin;
         })) {
@@ -41,11 +64,11 @@ app.all('*', function(req, res, next) {
     }
     res.header("Access-Control-Allow-Credentials", "true");
 
-    res.header("Access-Control-Allow-Headers", "content-type,timestamp,tanglv");
+    res.header("Access-Control-Allow-Headers", "X-Token, Content-Type, Content-Length, Authorization, Accept, X-Requested-With");
     res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
-    /*res.header("Content-Type", "application/json;charset=utf-8");*/
+    //res.header("Content-Type", "application/json;charset=utf-8");
     if(req.method == 'OPTIONS'){
-        res.send(200);
+        res.sendStatus(200);
     }else{
         next(); 
     }
@@ -57,11 +80,15 @@ app.all('*', function(req, res, next) {
  */
 app.all('*',function(req,res,next){
     if(typeof SESSION_STORE[req.sessionID] != 'undefined' || req.path == '/server/login' || req.path == '/server/logout'){
+        console.log("继续");
         next();
     }else{
+        console.log("终止")
         res.status(403).json({"msg":"会话已过期，请重新登录"});
     }
 });
+
+
 
 
 // view engine setup
@@ -93,4 +120,5 @@ app.use(function(err, req, res, next) {
     res.render('error');
 });
 
-module.exports = app;
+
+module.exports = {app,server};
