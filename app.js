@@ -11,14 +11,19 @@ global.reqlib = require('app-root-path').require;
 
 const userControl = reqlib('/servers/userServer/userControl');
 const loginControl = reqlib('/servers/loginServer/loginControl');
+const todoControl = reqlib('/servers/todoServer/todoControl');
 
 const whiteOriginList = ['http://localhost:8043'];
+const NOT_FILTER_URL_MAP = new Map();
+NOT_FILTER_URL_MAP.set('/server/login', '/server/login');
+NOT_FILTER_URL_MAP.set('/server/logout', '/server/logout');
+NOT_FILTER_URL_MAP.set('/server/register', '/server/register');
 
 const SESSION_STORE = reqlib('/SESSION_STORE');
 
 var app = express();
 var server = http.createServer(app);
-global.expressWs = expressWs(app,server);
+global.expressWs = expressWs(app, server);
 global.WS_MAP = new Map()
 
 /**
@@ -26,14 +31,13 @@ global.WS_MAP = new Map()
  * @author tanglv 2018-08-09
  */
 app.ws('/notification', function(ws, req) {
-    console.log('|||||||||||');
     console.log(req.query.socketid);
-  ws.on('message', function(msg) {
-    console.log(msg);
-  });
-  ws.send(`it's finally make the websocket work.${req.socketid}`);
-  WS_MAP.set(req.socketid,ws);
-  console.log('socket - /notification', 'success');
+    ws.on('message', function(msg) {
+        console.log(msg);
+    });
+    ws.send(`it's finally make the websocket work.${req.query.socketid}`);
+    WS_MAP.set(req.query.socketid, ws);
+    console.log('socket - /notification', 'success');
 });
 
 
@@ -42,7 +46,7 @@ app.use(session({
     ////这里的name值得是cookie的name，默认cookie的name是：connect.sid
     name: 'connect.sid',
     secret: 'keyboard cat',
-    cookie: ('name', 'value', { path: '/', httpOnly: true, secure: false, maxAge: 60 * 1000 }),
+    cookie: ('name', 'value', { path: '/', httpOnly: true, secure: false, maxAge: 60 * 60 * 1000 }),
     //重新保存：强制会话保存即使是未修改的。默认为true但是得写上
     resave: true,
     //强制“未初始化”的会话保存到存储。 
@@ -67,10 +71,10 @@ app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Headers", "X-Token, Content-Type, Content-Length, Authorization, Accept, X-Requested-With");
     res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
     //res.header("Content-Type", "application/json;charset=utf-8");
-    if(req.method == 'OPTIONS'){
+    if (req.method == 'OPTIONS') {
         res.sendStatus(200);
-    }else{
-        next(); 
+    } else {
+        next();
     }
 });
 
@@ -78,13 +82,13 @@ app.all('*', function(req, res, next) {
  * [拦截器]
  * @author tanglv 2018-08-08
  */
-app.all('*',function(req,res,next){
-    if(typeof SESSION_STORE[req.sessionID] != 'undefined' || req.path == '/server/login' || req.path == '/server/logout'){
+app.all('*', function(req, res, next) {
+    if (typeof SESSION_STORE[req.sessionID] != 'undefined' || NOT_FILTER_URL_MAP.has(req.path)) {
         console.log("继续");
         next();
-    }else{
+    } else {
         console.log("终止")
-        res.status(403).json({"msg":"会话已过期，请重新登录"});
+        res.status(403).json({ "msg": "会话已过期，请重新登录" });
     }
 });
 
@@ -102,7 +106,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/server', loginControl);
-app.use('/user', userControl)
+app.use('/user', userControl);
+app.use('/todo', todoControl);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -121,4 +127,4 @@ app.use(function(err, req, res, next) {
 });
 
 
-module.exports = {app,server};
+module.exports = { app, server };

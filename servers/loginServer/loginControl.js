@@ -11,7 +11,7 @@ const SESSION_STORE = reqlib('/SESSION_STORE');
  * @author tanglv 2018-08-08
  */
 router.post('/register', function(req, res, next) {
-    let tmpData = req.body.data;
+    let tmpData = req.body;
     if(!tmpData.email || !tmpData.phone || !tmpData.pwd){
     	res.json({'msg':'电子邮箱、电话号码、密码均不能为空'});
     	return;
@@ -46,6 +46,12 @@ router.post('/login', function(req, res, next) {
  * @author tanglv 2018-08-08
  */
 router.post('/logout', function(req, res, next) {
+    let userInfo = SESSION_STORE[req.sessionID]; 
+    if(!!userInfo){ 
+        let account = userInfo.account||userInfo.email||userInfo.phone;
+        WS_MAP.get(account).close();
+        WS_MAP.delete(account);
+    }
     delete SESSION_STORE[req.sessionID];
     res.end();
 });
