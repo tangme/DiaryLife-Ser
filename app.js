@@ -1,23 +1,32 @@
 var createError = require('http-errors');
 var express = require('express');
-var expressWs = require('express-ws');
-const session = require('express-session');
+var expressWs = require('express-ws');//websocket中间介
+const session = require('express-session');//session中间介
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var http = require('http');
 
-global.reqlib = require('app-root-path').require;
+var fs = require("fs"); //操作文件
+var multer = require("multer"); //处理上传文件
+var upload = multer({
+    dest: './uploads'
+}); //定义图片上传的临时目录
 
-const userControl = reqlib('/servers/userServer/userControl');
-const loginControl = reqlib('/servers/loginServer/loginControl');
-const todoControl = reqlib('/servers/todoServer/todoControl');
 
-const whiteOriginList = ['http://localhost:8043'];
-const NOT_FILTER_URL_MAP = new Map();
+global.reqlib = require('app-root-path').require;//导包插件
+
+const userControl = reqlib('/servers/userServer/userControl');//用户信息
+const loginControl = reqlib('/servers/loginServer/loginControl');//登录登出
+const todoControl = reqlib('/servers/todoServer/todoControl');//待办
+
+const whiteOriginList = ['http://localhost:8043'];//可访问 host 白名单
+const NOT_FILTER_URL_MAP = new Map();//不进行过滤限制url
 NOT_FILTER_URL_MAP.set('/server/login', '/server/login');
 NOT_FILTER_URL_MAP.set('/server/logout', '/server/logout');
 NOT_FILTER_URL_MAP.set('/server/register', '/server/register');
+const NOT_FILTER_URL_ARR = new Array();//不进行过滤限制url
+NOT_FILTER_URL_ARR.push('/uploads');
 
 const SESSION_STORE = reqlib('/SESSION_STORE');
 
@@ -26,21 +35,27 @@ var server = http.createServer(app);
 global.expressWs = expressWs(app, server);
 global.WS_MAP = new Map()
 
+
+function isOKPath(path){
+    return NOT_FILTER_URL_ARR.some(item=>{
+        return path.indexOf(item)==0
+    });
+}
 /**
  * [websocket]
  * @author tanglv 2018-08-09
  */
 app.ws('/notification', function(ws, req) {
-    console.log(req.query.socketid);
+    console.log(`websocket connect success,socketid is: ${req.query.socketid}`);
+    ws.send(`WebSocket Message from Server,socketid is: ${req.query.socketid}`);
+    ws.on('close',()=>{
+        console.log(`websocket closed,socketid is: ${req.query.socketid}`);
+    });
     ws.on('message', function(msg) {
         console.log(msg);
     });
-    ws.send(`it's finally make the websocket work.${req.query.socketid}`);
     WS_MAP.set(req.query.socketid, ws);
-    console.log('socket - /notification', 'success');
 });
-
-
 
 app.use(session({
     ////这里的name值得是cookie的name，默认cookie的name是：connect.sid
@@ -59,15 +74,12 @@ app.use(session({
  * @author tanglv 2018-08-08
  */
 app.all('*', function(req, res, next) {
-    console.log('in 设置跨域访问');
-    console.log(`===${req.path}===${req.method}`);
     if (whiteOriginList.some(function(item) {
             return item == req.headers.origin;
         })) {
         res.header("Access-Control-Allow-Origin", req.headers.origin);
     }
     res.header("Access-Control-Allow-Credentials", "true");
-
     res.header("Access-Control-Allow-Headers", "X-Token, Content-Type, Content-Length, Authorization, Accept, X-Requested-With");
     res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
     //res.header("Content-Type", "application/json;charset=utf-8");
@@ -83,17 +95,50 @@ app.all('*', function(req, res, next) {
  * @author tanglv 2018-08-08
  */
 app.all('*', function(req, res, next) {
-    if (typeof SESSION_STORE[req.sessionID] != 'undefined' || NOT_FILTER_URL_MAP.has(req.path)) {
-        console.log("继续");
+    if (typeof SESSION_STORE[req.sessionID] != 'undefined' || NOT_FILTER_URL_MAP.has(req.path) || isOKPath(req.path)) {
         next();
     } else {
-        console.log("终止")
         res.status(403).json({ "msg": "会话已过期，请重新登录" });
     }
 });
 
 
+// 单域多文件上传：input[file]的 multiple=="multiple"
+app.post('/uploads', upload.array('imageFile', 5), function(req, res, next) {
+    // req.files 是 前端表单name=="imageFile" 的多个文件信息（数组）,限制数量5，应该打印看一下
+    for (let i = 0; i < req.files.length; i++) {
+        // 图片会放在uploads目录并且没有后缀，需要自己转存，用到fs模块
+        // 对临时文件转存，fs.rename(oldPath, newPath,callback);
+        fs.rename(req.files[i].path, "uploads/" + req.files[i].originalname, function(err) {
+            if (err) {
+                throw err;
+            }
+            console.log('done!');
+        })
+    }
 
+    /*res.writeHead(200, {
+        "Access-Control-Allow-Origin": "*" //允许跨域。。。
+    });*/
+    // req.body 将具有文本域数据, 如果存在的话
+    res.end(JSON.stringify(req.files) + JSON.stringify(req.body));
+})
+
+// 单域单文件上传：input[file]的 multiple != "multiple"
+app.post('/upload', upload.single('imageFile'), function(req, res, next) {
+    // req.file 是 前端表单name=="imageFile" 的文件信息（不是数组）
+
+    fs.rename(req.file.path, "uploads/" + req.file.originalname, function(err) {
+        if (err) {
+            throw err;
+        }
+        console.log('上传成功!');
+    })
+    /*res.writeHead(200, {
+        "Access-Control-Allow-Origin": "*"
+    });*/
+    res.end(JSON.stringify(req.file) + JSON.stringify(req.body));
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -108,7 +153,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/server', loginControl);
 app.use('/user', userControl);
 app.use('/todo', todoControl);
-
+app.use('/uploads',express.static('uploads'));//将文件设置成静态
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
