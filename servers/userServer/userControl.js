@@ -14,7 +14,7 @@ router.post('/updateUserInfo', function(req, res, next) {
 	let userInfo = SESSION_STORE[req.sessionID];
 	
 	if(typeof userInfo != 'undefined'){
-		userSer.updateUserInfo(userInfo.tid,tmpBody.nickName).then(data=>{
+		userSer.updateUserInfo(userInfo.tid,tmpBody).then(data=>{
     		res.json(data);
 			let account = userInfo.account||userInfo.email||userInfo.phone;
 			WS_MAP.get(account).send(`infomation from ${account}`);
