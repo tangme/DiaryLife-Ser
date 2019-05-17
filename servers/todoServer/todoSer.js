@@ -1,7 +1,7 @@
 const mysql = reqlib('/database/mysqlDriver');
 const uuidv1 = require('uuid/v1');
-const QUERY_TODO_SQL = `select tid,content from todo t where t.account_id = ?`;
-const ADD_TODO_SQL = `insert into todo(tid,content,account_id) values(?,?,?)`;
+const QUERY_TODO_SQL = `select tid,content from todo t where t.account_id = ? order by t.create_time `;
+const ADD_TODO_SQL = `insert into todo(tid,content,account_id,create_time) values(?,?,?,?)`;
 const UPDATE_TODO_SQL = `update todo t set t.content = ? where t.tid = ? `;
 const DELETE_TODO_SQL = `delete from todo where tid = ?`;
 
@@ -35,9 +35,8 @@ module.exports = {
 			});
 		}
 		let tid = uuidv1();
-		let sqlParams = [tid,content,account_id];
+		let sqlParams = [tid,content,account_id,+new Date()];
 		return mysql.exe(ADD_TODO_SQL,sqlParams).then(data=>{
-			console.log(data);
 			return {'code':1,'msg':'注册成功','data':{'tid':tid}};
 		},data=>{
 			return {'code':0,'msg':'注册失败'};
