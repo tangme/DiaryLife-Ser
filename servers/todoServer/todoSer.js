@@ -1,8 +1,10 @@
 const mysql = reqlib('/database/mysqlDriver');
 const uuidv1 = require('uuid/v1');
-const QUERY_TODO_SQL = `select tid,content from todo t where t.account_id = ? order by t.create_time `;
+const QUERY_TODO_SQL = `select tid,content from todo t where t.account_id = ? and t.finished_time is null order by t.create_time `;
+const QUERY_FINISHED_TODO_SQL = `select tid,content from todo t where t.account_id = ? and t.finished_time is not null order by t.create_time `;
 const ADD_TODO_SQL = `insert into todo(tid,content,account_id,create_time) values(?,?,?,?)`;
 const UPDATE_TODO_SQL = `update todo t set t.content = ? where t.tid = ? `;
+const FINISHED_TODO_SQL = `update todo t set t.finished_time = ? where t.tid = ? `;
 const DELETE_TODO_SQL = `delete from todo where tid = ?`;
 
 module.exports = {
@@ -21,6 +23,17 @@ module.exports = {
 		return mysql.exe(QUERY_TODO_SQL,sqlParams).then(function(data){
 			return data;
 	    });
+	},
+	queryFinishedTodo:function(account_id){
+		if(!account_id){
+			return new Promise(function(resolve,reject){
+				resolve({ 'code': 0, 'msg':'查询帐号不能为空'});
+			});
+		}
+		let sqlParams = [account_id];
+		return mysql.exe(QUERY_FINISHED_TODO_SQL, sqlParams).then(function (data) {
+			return data;
+		});
 	},
 	/**
 	 * [addTodo 增加待办]
@@ -59,6 +72,19 @@ module.exports = {
 			return {'code':1,'msg':'注册成功'};
 		},data=>{
 			return {'code':0,'msg':'注册失败'};
+		});
+	},
+	finishedTodo:function(tid){
+		if(!tid){
+			return new Promise(function(resolve,reject){
+				resolve({'code':0,'msg':'必备字段不能为空'});
+			});
+		}
+		let sqlParams = [+new Date(),tid];
+		return mysql.exe(FINISHED_TODO_SQL,sqlParams).then(data=>{
+			return {'code':1,'msg':'更新操作成功'};
+		},data=>{
+			return {'code':0,'msg':'更新操作失败'};
 		});
 	},
 	/**

@@ -19,7 +19,16 @@ router.post('/queryTodo', function(req, res, next) {
 		})
 	}
 });
+router.post('/queryFinishedTodo', function (req, res, next) {
+	let tmpBody = req.body;
+	let userInfo = SESSION_STORE[req.sessionID];
 
+	if (typeof userInfo != 'undefined') {
+		todoSer.queryFinishedTodo(userInfo.tid).then(data => {
+			res.json(data);
+		})
+	}
+});
 /**
  * [增加待办]
  * @author tanglv 2018-08-13
@@ -45,6 +54,17 @@ router.post('/updateTodo', function(req, res, next) {
 	
 	if(typeof userInfo != 'undefined'){
 		todoSer.updateTodo(tmpBody.tid,tmpBody.content).then(data=>{
+    		res.json(data);
+		})
+	}
+});
+
+router.post('/finishedTodo', function(req, res, next) {
+	let tmpBody = req.body;
+	let userInfo = SESSION_STORE[req.sessionID];
+	
+	if(typeof userInfo != 'undefined'){
+		todoSer.finishedTodo(tmpBody.tid).then(data=>{
     		res.json(data);
 		})
 	}
