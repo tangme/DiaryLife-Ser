@@ -58,10 +58,11 @@ router.post('/addTodo', function(req, res, next) {
  */
 router.post('/updateTodo', function(req, res, next) {
 	let tmpBody = req.body;
+	let {tid,content} = tmpBody.data;
 	let userInfo = SESSION_STORE[req.sessionID];
 	
 	if(typeof userInfo != 'undefined'){
-		todoSer.updateTodo(tmpBody.tid,tmpBody.content).then(data=>{
+		todoSer.updateTodo(tid,content).then(data=>{
     		res.json(data);
 		})
 	}
