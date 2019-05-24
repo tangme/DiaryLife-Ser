@@ -19,6 +19,14 @@ router.post('/queryTodo', function(req, res, next) {
 		})
 	}
 });
+/**
+ * [查询已完成的待办]
+ * @Author tanglv     2019-05-24
+ * @param  {[type]}   req        [description]
+ * @param  {[type]}   res        [description]
+ * @param  {Function} next)      {	let        tmpBody [description]
+ * @return {[type]}              [description]
+ */
 router.post('/queryFinishedTodo', function (req, res, next) {
 	let tmpBody = req.body;
 	let userInfo = SESSION_STORE[req.sessionID];
@@ -58,13 +66,38 @@ router.post('/updateTodo', function(req, res, next) {
 		})
 	}
 });
-
+/**
+ * [将待办更新为完成状态]
+ * @Author tanglv     2019-05-24
+ * @param  {[type]}   req        [description]
+ * @param  {[type]}   res        [description]
+ * @param  {Function} next)      {	let        tmpBody [description]
+ * @return {[type]}              [description]
+ */
 router.post('/finishedTodo', function(req, res, next) {
 	let tmpBody = req.body;
 	let userInfo = SESSION_STORE[req.sessionID];
 	
 	if(typeof userInfo != 'undefined'){
 		todoSer.finishedTodo(tmpBody.tid).then(data=>{
+    		res.json(data);
+		})
+	}
+});
+/**
+ * [将待办更新为 未完成状态]
+ * @Author tanglv     2019-05-24
+ * @param  {[type]}   req        [description]
+ * @param  {[type]}   res        [description]
+ * @param  {Function} next)      {	let        tmpBody [description]
+ * @return {[type]}              [description]
+ */
+router.post('/undoTodo', function(req, res, next) {
+	let tmpBody = req.body;
+	let userInfo = SESSION_STORE[req.sessionID];
+	
+	if(typeof userInfo != 'undefined'){
+		todoSer.undoTodo(tmpBody.tid).then(data=>{
     		res.json(data);
 		})
 	}

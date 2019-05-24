@@ -5,6 +5,7 @@ const QUERY_FINISHED_TODO_SQL = `select tid,content from todo t where t.account_
 const ADD_TODO_SQL = `insert into todo(tid,content,account_id,create_time) values(?,?,?,?)`;
 const UPDATE_TODO_SQL = `update todo t set t.content = ? where t.tid = ? `;
 const FINISHED_TODO_SQL = `update todo t set t.finished_time = ? where t.tid = ? `;
+const UNDO_TODO_SQL = `update todo t set t.finished_time = null where t.tid = ? `;
 const DELETE_TODO_SQL = `delete from todo where tid = ?`;
 
 module.exports = {
@@ -24,6 +25,12 @@ module.exports = {
 			return data;
 	    });
 	},
+	/**
+	 * [queryFinishedTodo 查询已完成的待办]
+	 * @Author tanglv   2019-05-24
+	 * @param  {[type]} account_id [description]
+	 * @return {[type]}            [description]
+	 */
 	queryFinishedTodo:function(account_id){
 		if(!account_id){
 			return new Promise(function(resolve,reject){
@@ -74,6 +81,12 @@ module.exports = {
 			return {'code':0,'msg':'注册失败'};
 		});
 	},
+	/**
+	 * [finishedTodo 将待办更新为完成状态]
+	 * @Author tanglv   2019-05-24
+	 * @param  {[type]} tid        [description]
+	 * @return {[type]}            [description]
+	 */
 	finishedTodo:function(tid){
 		if(!tid){
 			return new Promise(function(resolve,reject){
@@ -82,6 +95,25 @@ module.exports = {
 		}
 		let sqlParams = [+new Date(),tid];
 		return mysql.exe(FINISHED_TODO_SQL,sqlParams).then(data=>{
+			return {'code':1,'msg':'更新操作成功'};
+		},data=>{
+			return {'code':0,'msg':'更新操作失败'};
+		});
+	},
+	/**
+	 * [undoTodo 将待办更新为 未完成状态]
+	 * @Author tanglv   2019-05-24
+	 * @param  {[type]} tid        [description]
+	 * @return {[type]}            [description]
+	 */
+	undoTodo:function(tid){
+		if(!tid){
+			return new Promise(function(resolve,reject){
+				resolve({'code':0,'msg':'必备字段不能为空'});
+			});
+		}
+		let sqlParams = [tid];
+		return mysql.exe(UNDO_TODO_SQL,sqlParams).then(data=>{
 			return {'code':1,'msg':'更新操作成功'};
 		},data=>{
 			return {'code':0,'msg':'更新操作失败'};
