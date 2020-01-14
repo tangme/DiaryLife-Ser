@@ -19,14 +19,19 @@ global.reqlib = require('app-root-path').require;//导包插件
 const userControl = reqlib('/servers/userServer/userControl');//用户信息
 const loginControl = reqlib('/servers/loginServer/loginControl');//登录登出
 const todoControl = reqlib('/servers/todoServer/todoControl');//待办
+const publicControl = reqlib('/servers/publicServer/publicControl');//公共开放接口
 
-const whiteOriginList = ['http://localhost:8043'];//可访问 host 白名单
+
+const whiteOriginList = ['http://localhost:8043','http://localhost:8080'];//可访问 host 白名单
+
 const NOT_FILTER_URL_MAP = new Map();//不进行过滤限制url
 NOT_FILTER_URL_MAP.set('/server/login', '/server/login');
 NOT_FILTER_URL_MAP.set('/server/logout', '/server/logout');
 NOT_FILTER_URL_MAP.set('/server/register', '/server/register');
+
 const NOT_FILTER_URL_ARR = new Array();//不进行过滤限制url
 NOT_FILTER_URL_ARR.push('/uploads');
+NOT_FILTER_URL_ARR.push('/public');
 
 const SESSION_STORE = reqlib('/SESSION_STORE');
 
@@ -153,6 +158,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/server', loginControl);
 app.use('/user', userControl);
 app.use('/todo', todoControl);
+app.use('/public',publicControl);
 app.use('/uploads',express.static('uploads'));//将文件设置成静态
 
 // catch 404 and forward to error handler
