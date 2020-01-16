@@ -152,6 +152,9 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json({limit:'50mb'}));//limit: Controls the maximum request body size.
 app.use(express.urlencoded({limit: '50mb', extended: true}));
+
+app.use(upload.array());// multipart/form-data 中间件支持
+
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
